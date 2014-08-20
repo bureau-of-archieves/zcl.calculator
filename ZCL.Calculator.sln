@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZCL.Calculator", "ZCL.Calculator\ZCL.Calculator.csproj", "{621E4E7E-1BCB-42B7-ADFB-54A5141CF758}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZCL.Calculator.Test", "ZCL.Calculator.Test\ZCL.Calculator.Test.csproj", "{5B28597E-EBA2-4F41-A320-0BB5892B28FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{621E4E7E-1BCB-42B7-ADFB-54A5141CF758}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{621E4E7E-1BCB-42B7-ADFB-54A5141CF758}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{621E4E7E-1BCB-42B7-ADFB-54A5141CF758}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{621E4E7E-1BCB-42B7-ADFB-54A5141CF758}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B28597E-EBA2-4F41-A320-0BB5892B28FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B28597E-EBA2-4F41-A320-0BB5892B28FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B28597E-EBA2-4F41-A320-0BB5892B28FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B28597E-EBA2-4F41-A320-0BB5892B28FF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
