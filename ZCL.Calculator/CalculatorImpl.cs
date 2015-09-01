@@ -1,40 +1,120 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
+    /// <summary>
+    /// An extensible calculator.
+    /// Instance of this class is not thread safe.
+    /// </summary>
+    internal class CalculatorImpl : ICalculator
     {
-        //available symbols for operator in this calculator. Order here matters for parsing.
-        private static readonly string[] OP_TOKENS = new string[] { "!=", ">=", "<=", ":=", "+", "-", "*", "/", "^", "%", "!", "=", ">", "<", "(", ")", "," };
-        private static readonly CommandProvider COMMANDS;//operators + functions
-        private static readonly Tokenizer TOKENIZER;
 
-        private Stack<OpSlot> _opStack;
-        private Stack<ValueSlot> _valueStack;
-        private Scope _scope;
+        #region fields
+
+        /// <summary>
+        /// Operators and functions.
+        /// </summary>
+        private readonly CommandProvider _commands;
+
+        /// <summary>
+        /// Used to parser source expression in to a token stream.
+        /// </summary>
+        private readonly Tokenizer _tokenizer;
+
+        /// <summary>
+        /// "Memory" of this calculator instance.
+        /// </summary>
+        private readonly Scope _scope;
+
+        /// <summary>
+        /// Stack of operators encountered so far in the expression.
+        /// </summary>
+        private readonly Stack<OpSlot> _opStack;
+
+        /// <summary>
+        /// Stack of values encountered so far in the expression.
+        /// </summary>
+        private readonly Stack<ValueSlot> _valueStack;
+
+        /// <summary>
+        /// Buffer of tokens not processed.
+        /// </summary>
+        private readonly TokenBufferItem[] _tokenBuffer;
+
+        /// <summary>
+        /// The expression being computed.
+        /// </summary>
         private string _expr;
-        private TokenBufferItem[] _tokenBuffer;
 
-        static Calculator()
-        {
-            COMMANDS = new CommandProvider();
-            TOKENIZER = new Tokenizer(OP_TOKENS);
-        }
+        #endregion
 
-        public Calculator()
+        internal CalculatorImpl(CommandProvider commandProvider)
         {
+            _commands = commandProvider;
+            _tokenizer = new Tokenizer(GetAllOperators(_commands));
             _scope = new Scope(); //scope lives with this instance
             _opStack = new Stack<OpSlot>();
             _valueStack = new Stack<ValueSlot>();
             _tokenBuffer = new TokenBufferItem[2]; //need to look 2 ahead to decide type of operator (e.g. prefix or suffix)
 
-            _scope.SetConstant("PI", Math.PI);
-            _scope.SetConstant("E", Math.E);
+            _commands.loadConstants(_scope);
+        }
+
+        private static String[] GetAllOperators(CommandProvider commandProvider)
+        {
+            return commandProvider.GetOperators().Concat(new[] { ":=", "(", ")", "," }).OrderByDescending(x => x.Length).ToArray();
+        }
+
+
+        public void Clear() {
+            this._scope.Clear();
+        }
+
+        public double Compute(string expr)
+        {
+            _expr = expr;
+
+            //parse VARNAME := RIGHT | RIGHT
+            int index = 0;
+            string varname = null;
+
+            while (true)
+            {
+                int tokenStartIndex = index;
+                var token = _tokenizer.ReadToken(expr, ref index);
+                if (token == TokenType.Invalid) new CalculatorException(string.Format("Invalid token at column {0}", tokenStartIndex));
+                if (token == TokenType.Whitespace) continue;
+
+                if (varname == null)
+                {
+                    if (token != TokenType.Identifier)
+                    {
+                        index = 0;
+                        break;
+                    }
+                    varname = expr.Substring(tokenStartIndex, index - tokenStartIndex);
+                }
+                else
+                {
+                    if (token == TokenType.Op && expr.Substring(tokenStartIndex, index - tokenStartIndex) == ":=")
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        varname = null;
+                        index = 0;
+                        break;
+                    }
+                }
+            }
+
+            double retval = ComputeRightValue(index);
+            if (varname != null)
+                _scope[varname] = retval;
+            return retval;
         }
 
         /// <summary>
@@ -85,51 +165,6 @@ namespace ZCL.Interpreters
             }
         }
 
-        public double Compute(string expr)
-        {
-            _expr = expr;
-
-            //parse VARNAME := RIGHT | RIGHT
-            int index = 0;
-            string varname = null;
-
-            while (true)
-            {
-                int tokenStartIndex = index;
-                var token = TOKENIZER.ReadToken(expr, ref index);
-                if (token == TokenType.Invalid) new CalculatorException(string.Format("Invalid token at column {0}", tokenStartIndex));
-                if (token == TokenType.Whitespace) continue;
-
-                if (varname == null)
-                {
-                    if (token != TokenType.Identifier)
-                    {
-                        index = 0;
-                        break;
-                    }
-                    varname = expr.Substring(tokenStartIndex, index - tokenStartIndex);
-                }
-                else
-                {
-                    if (token == TokenType.Op && expr.Substring(tokenStartIndex, index - tokenStartIndex) == ":=")
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        varname = null;
-                        index = 0;
-                        break;
-                    }
-                }
-            }
-
-            double retval = ComputeRightValue(index);
-            if (varname != null)
-                _scope[varname] = retval;
-            return retval;
-        }
-
         private double ComputeRightValue(int index)
         {
             _opStack.Clear();
@@ -143,7 +178,7 @@ namespace ZCL.Interpreters
             while (true)
             {
                 int tokenStartIndex = index;
-                TokenType type = TOKENIZER.ReadToken(_expr, ref index);
+                TokenType type = _tokenizer.ReadToken(_expr, ref index);
 
                 if (type == TokenType.Invalid)
                     throw new CalculatorException(string.Format("Invalid token at column {0}", tokenStartIndex));
@@ -189,7 +224,7 @@ namespace ZCL.Interpreters
                     return true;
                 }
 
-                if (COMMANDS.HasCommand(_tokenBuffer[0].Token)) //see if its a func
+                if (_commands.HasCommand(_tokenBuffer[0].Token)) //see if its a func
                 {
                     _opStack.Push(new OpSlot(_tokenBuffer[0].Token, OperatorType.None, MaxTokenBlockId));
                     return true;
@@ -253,7 +288,7 @@ namespace ZCL.Interpreters
 
             if (key != ")") //passed an actual operator
             {
-                newOp = (Operator)COMMANDS.GetCommand(key);
+                newOp = (Operator)_commands.GetCommand(key);
 
                 if (LastIsValue)//check if is ok to add it here
                 {
@@ -294,8 +329,8 @@ namespace ZCL.Interpreters
                     continue;
                 }
 
-                if (!COMMANDS.HasCommand(lastOpSlot.Value)) break;
-                Operator lastOp = (Operator)COMMANDS.GetCommand(lastOpSlot.Value);
+                if (!_commands.HasCommand(lastOpSlot.Value)) break;
+                Operator lastOp = (Operator)_commands.GetCommand(lastOpSlot.Value);
 
                 if (lastOpSlot.Type == OperatorType.Suffix)
                 {
@@ -352,7 +387,7 @@ namespace ZCL.Interpreters
                         var lastSlot = _opStack.Peek();
                         if (lastSlot.Value != "(")
                         {
-                            var lastOp = COMMANDS.GetCommand(lastSlot.Value) as Function;
+                            var lastOp = _commands.GetCommand(lastSlot.Value) as Function;
                             if (lastOp != null)
                             {
                                 List<double> args = new List<double>();

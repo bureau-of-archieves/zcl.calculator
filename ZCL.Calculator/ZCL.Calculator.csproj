@@ -11,6 +11,7 @@
     <AssemblyName>ZCL.Calculator</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,10 +41,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssociationType.cs" />
-    <Compile Include="Calculator.cs" />
+    <Compile Include="CalculatorImpl.cs" />
     <Compile Include="CalculatorException.cs" />
+    <Compile Include="CalculatorFactory.cs" />
+    <Compile Include="CommandConfigurer.cs" />
     <Compile Include="CommandProvider.cs" />
     <Compile Include="Function.cs" />
+    <Compile Include="ICalculator.cs" />
+    <Compile Include="ICommandProvider.cs" />
     <Compile Include="Operator.cs" />
     <Compile Include="OperatorType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

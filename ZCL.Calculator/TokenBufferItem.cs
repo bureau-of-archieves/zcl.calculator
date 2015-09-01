@@ -4,15 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
+
+    internal struct TokenBufferItem
     {
-        private struct TokenBufferItem
-        {
-            public int StartIndex;
-            public string Token;
-            public TokenType Type;
-        }
+        public int StartIndex;
+        public string Token;
+        public TokenType Type;
     }
+
 }

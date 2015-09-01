@@ -4,15 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
+ 
+    public enum AssociationType
     {
-        private enum AssociationType
-        {
-            Left,
-            Right
-        }
+        Left,
+        Right,
+        None //use this for prefix only or suffix only operators for clearity.
     }
-
 }

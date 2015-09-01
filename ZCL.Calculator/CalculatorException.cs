@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ZCL.Interpreters
 {
+    [Serializable]
     public class CalculatorException : ApplicationException
     {
         public CalculatorException(string message, Exception innerException = null)

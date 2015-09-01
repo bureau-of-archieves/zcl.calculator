@@ -4,18 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
+    internal enum TokenType
     {
-        private enum TokenType
-        {
-            Op,
-            Number,
-            Identifier,
-            Whitespace,
-            End,
-            Invalid
-        }
+        Op,
+        Number,
+        Identifier,
+        Whitespace,
+        End,
+        Invalid
     }
 }

@@ -4,24 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
+
+    internal class Function : StackCommand
     {
-
-        private class Function : StackCommand
+        public Function(string name, Func<IList<double>, double> body)
+            : base(name)
         {
-            public Function(string name, Func<IList<double>, double> body)
-                : base(name)
-            {
-                this.Body = body;
-            }
-
-            public Func<IList<double>, double> Body
-            {
-                get;
-                private set;
-            }
+            this.Body = body;
+        }
+    
+        public Func<IList<double>, double> Body
+        {
+            get;
+            private set;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ZCL.Interpreters;
+using ZCL.Interpreters.Calculator;
 
 namespace TextbookDataStructures.Test
 {
@@ -12,10 +13,17 @@ namespace TextbookDataStructures.Test
     [TestClass]
     public class CalculatorTest
     {
+        private CalculatorFactory calculatorFactory;
+
+        public CalculatorTest()
+        {
+            calculatorFactory = new CalculatorFactory();
+        }
+
         [TestMethod]
         public void Calculator_Constant_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
 
             double retval = calc.Compute("1024.55");
             Assert.AreEqual(retval, 1024.55);
@@ -30,7 +38,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Assign_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
 
             double retval = calc.Compute("a := 999.77");
             Assert.AreEqual(retval, 999.77);
@@ -54,7 +62,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Operator_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
 
             double retval = calc.Compute("1 + 2");
             Assert.AreEqual(retval, 3d);
@@ -127,7 +135,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_MultiOp_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
 
             double retval = calc.Compute("1000 + 990 + 9");
             Assert.AreEqual(retval, 1999d);
@@ -161,7 +169,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_MultiOpBracket_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
 
             double retval = calc.Compute("-(1 + -2)*5");
             Assert.AreEqual(retval, 5d);
@@ -205,7 +213,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Bracket_Mismatch_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("a:=(PI*2+3");
         }
 
@@ -213,7 +221,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Bracket_Mismatch_Test2()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("a:=(PI*2+3)))");
         }
 
@@ -221,7 +229,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_InvalidToken_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("a$23a:=(PI*2+3)))");
         }
 
@@ -229,7 +237,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_InvalidToken_Test2()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("a:=(PI*2+3$#2)))");
         }
 
@@ -237,7 +245,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_InvalidToken_Test3()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("a:=3.3.3");
         }
 
@@ -245,7 +253,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Unknown_Function_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("Sin(32.5)*3.44-1");
         }
 
@@ -253,7 +261,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Unknown_Function_Test2()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("3.44-1*Sin(32.5)");
         }
 
@@ -261,14 +269,14 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Missing_Op_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("2 3 4 5");
         }
 
         [TestMethod]
         public void Calculator_Function_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("cos(32.5)*3.44-1");
             Assert.AreEqual(Math.Cos(32.5) * 3.44 - 1, retval);
 
@@ -292,7 +300,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Cannot_Set_Constant_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("PI:=PI+1");
         }
 
@@ -300,7 +308,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Remove_Var_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("a := 1");
             retval = calc.Compute("a := nan(0)");
             retval = calc.Compute("a");
@@ -309,7 +317,7 @@ namespace TextbookDataStructures.Test
         [TestMethod]
         public void Calculator_Full_Test()
         {
-            Calculator calc = new Calculator();
+            ICalculator calc = calculatorFactory.createInstance();
             double retval = calc.Compute("a:=PI*2+3");
             retval = calc.Compute("a - 55.12345");
             Assert.AreEqual(retval, Math.PI * 2 + 3 - 55.12345);
@@ -341,6 +349,37 @@ namespace TextbookDataStructures.Test
             retval = calc.Compute("(!(a!)) = 0");
             Assert.AreEqual(1d, retval);
 
+        }
+
+        private class TestConfigurer : CommandConfigurer
+        {
+
+            public override void config(ICommandProvider commandProvider)
+            {
+                base.config(commandProvider);
+
+                //additional operators
+                commandProvider.CreateOperator("~", OperatorType.Prefix | OperatorType.Suffix, 0, AssociationType.None, (x, y) => { return double.IsNaN(y) ? (x - (long)x) : (long)y; });
+            }
+        }
+
+        [TestMethod]
+        public void Configurer_Test()
+        {
+            var configurer = new TestConfigurer();
+            ICalculator calculator = new CalculatorFactory(configurer).createInstance();
+
+            double result = calculator.Compute("~3.3");
+            Assert.AreEqual(3d, result);
+
+            result = calculator.Compute("~3.3+2.8");
+            Assert.AreEqual(5.8d, result);
+
+            result = calculator.Compute("3.3+2.8~");
+            Assert.AreEqual(4.1d, result);
+
+            result = calculator.Compute("3.3+2.8~*2");
+            Assert.AreEqual(4.9d, result, 0.00001);
         }
 
     }

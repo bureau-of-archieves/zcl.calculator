@@ -4,46 +4,49 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
+
+    internal class Scope
     {
-        private class Scope
+        private readonly Dictionary<String, ValueSlot> _storage = new Dictionary<string, ValueSlot>();
+
+        internal double this[string varname]
         {
-            private Dictionary<String, ValueSlot> _storage = new Dictionary<string, ValueSlot>();
-
-            public double this[string varname]
+            get
             {
-                get
-                {
-                    ValueSlot slot;
-                    if (_storage.TryGetValue(varname, out slot))
-                        return slot.Value;
-                    return double.NaN;
-                }
+                ValueSlot slot;
+                if (_storage.TryGetValue(varname, out slot))
+                    return slot.Value;
+                return double.NaN;
+            }
 
-                set
+            set
+            {
+                ValueSlot slot;
+                if (_storage.TryGetValue(varname, out slot))
                 {
-                    ValueSlot slot;
-                    if (_storage.TryGetValue(varname, out slot))
+                    if (slot.Position != 0) throw new CalculatorException("Cannot assign a value to a constant.");
+
+                    if (double.IsNaN(value))
                     {
-                        if (slot.Position != 0) throw new CalculatorException("Cannot assign a value to a constant.");
-
-                        if (double.IsNaN(value))
-                        {
-                            _storage.Remove(varname);
-                            return;
-                        }
+                        _storage.Remove(varname);
+                        return;
                     }
-
-                    _storage[varname] = new ValueSlot(value, 0);
                 }
-            }
 
-            public void SetConstant(string constName, double value)
-            {
-                this._storage[constName] = new ValueSlot(value, 1);
+                _storage[varname] = new ValueSlot(value, 0);//in scope object: position == 0 -> variable
             }
+        }
+
+        public void SetConstant(string constName, double value)
+        {
+            this._storage[constName] = new ValueSlot(value, 1);//in scope object: position == 1 -> constant
+        }
+
+        internal void Clear()
+        {
+            throw new NotImplementedException();
         }
     }
 }

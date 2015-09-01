@@ -4,72 +4,61 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
-    {
+
         /// <summary>
         /// This class defines the operations supported by this calculator.
         /// </summary>
-        private class CommandProvider
+        internal class CommandProvider : ICommandProvider
         {
-            private static IDictionary<string, StackCommand> _commands;
+            private readonly IDictionary<string, StackCommand> _commands;
+            private readonly IList<String> _operators;
+            private readonly IDictionary<String, double> _constants;
 
-            static CommandProvider()
-            {
-                //sufix > prefix > binary
+            public CommandProvider(CommandConfigurer commandConfigurer) {
                 _commands = new Dictionary<string, StackCommand>();
-                _commands.Add("+", new Operator("+", OperatorType.Binary, 5000, AssociationType.Left, (x, y) => x + y));
-                _commands.Add("-", new Operator("-", OperatorType.Binary | OperatorType.Prefix, 5000, AssociationType.Left,
-                    (x, y) => (double.IsNaN(x) ? 0 : x) - y
-                ));
-                _commands.Add("*", new Operator("*", OperatorType.Binary, 6000, AssociationType.Left, (x, y) => x * y));
-                _commands.Add("/", new Operator("/", OperatorType.Binary, 6000, AssociationType.Left, (x, y) => x / y));
-                _commands.Add("%", new Operator("%", OperatorType.Binary, 7000, AssociationType.Left, (x, y) => (long)x % (long)y));
-                _commands.Add("^", new Operator("^", OperatorType.Binary, 8000, AssociationType.Right, (x, y) => Math.Pow(x, y)));
-                _commands.Add("!", new Operator("!", OperatorType.Prefix | OperatorType.Suffix, 5000, AssociationType.Right,
-                    (x, y) =>
-                    {
-                        if (double.IsNaN(y))
-                        {
-                            double retval = 1;
-                            for (int i = (int)x; i > 0; i--)
-                                retval *= i;
-                            return retval;
-                        }
-                        else
-                        {
-                            return y == 0 ? 1 : 0;
-                        }
-
-                    }));
-
-                _commands.Add("=", new Operator("=", OperatorType.Binary, 4000, AssociationType.Left, (x, y) => x == y ? 1 : 0));
-                _commands.Add("!=", new Operator("!=", OperatorType.Binary, 4000, AssociationType.Left, (x, y) => x != y ? 1 : 0));
-                _commands.Add(">", new Operator(">", OperatorType.Binary, 4000, AssociationType.Left, (x, y) => x > y ? 1 : 0));
-                _commands.Add(">=", new Operator(">=", OperatorType.Binary, 4000, AssociationType.Left, (x, y) => x >= y ? 1 : 0));
-                _commands.Add("<", new Operator("<", OperatorType.Binary, 4000, AssociationType.Left, (x, y) => x < y ? 1 : 0));
-                _commands.Add("<=", new Operator("<=", OperatorType.Binary, 4000, AssociationType.Left, (x, y) => x <= y ? 1 : 0));
-
-
-                //functions
-                _commands.Add("log", new Function("log", args => Math.Log(args[1], args[0])));
-                _commands.Add("sin", new Function("sin", args => Math.Sin(args[0])));
-                _commands.Add("cos", new Function("cos", args => Math.Cos(args[0])));
-                _commands.Add("tan", new Function("tan", args => Math.Tan(args[0])));
-                _commands.Add("sum", new Function("sum", args => args.Sum()));
-                _commands.Add("nan", new Function("nan", args => double.NaN));
+                _constants = new Dictionary<String, double>();
+                 commandConfigurer.config(this);
+                _operators = _commands.Where(entry => entry.Value is Operator).Select(entry => entry.Key).ToList();
             }
 
-            public StackCommand GetCommand(string opName)
+            internal StackCommand GetCommand(string opName)
             {
                 return _commands[opName];
             }
 
-            public bool HasCommand(string opName)
+            internal IList<String> GetOperators()
+            {
+                return _operators;
+            }
+
+            internal bool HasCommand(string opName)
             {
                 return _commands.ContainsKey(opName);
             }
+
+            internal void loadConstants(Scope scope)
+            {
+                foreach (var entry in _constants) {
+                    scope.SetConstant(entry.Key, entry.Value);
+                }
+            }
+
+            public void CreateOperator(String opToken, OperatorType type, int precedence, AssociationType association, Func<double, double, double> body)
+            {
+                _commands.Add(opToken, new Operator(opToken, type, precedence, association, body));
+            }
+
+            public void CreateFunction(string name, Func<IList<double>, double> body)
+            {
+                _commands.Add(name, new Function(name, body));
+            }
+
+            public void CreateConstant(String name, double value) {
+                _constants.Add(name, value);
+            }
+
         }
-    }
+    
 }

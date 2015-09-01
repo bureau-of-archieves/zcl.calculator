@@ -4,22 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZCL.Interpreters
+namespace ZCL.Interpreters.Calculator
 {
-    public partial class Calculator
+    internal abstract class StackCommand
     {
-        private abstract class StackCommand
+        public StackCommand(string name)
         {
-            public StackCommand(string name)
-            {
-                this.Name = name;
-            }
+            this.Name = name;
+        }
 
-            public string Name
-            {
-                get;
-                private set;
-            }
+        public string Name
+        {
+            get;
+            private set;
         }
     }
 }
